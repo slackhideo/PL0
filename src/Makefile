@@ -2,7 +2,7 @@
 CC	= gcc
 #CFLAGS	= 
 #CFLAGS	= -DLATEX
-CFLAGS	= -DTOKEN_HTML
+CFLAGS	= -DTOKEN_HTML -g
 LFLAGS	=
 
 OBJS	= codegen.o \
@@ -12,6 +12,7 @@ OBJS	= codegen.o \
 	  table.o
 
 .SUFFIXES	: .o .c
+.PHONY: clean tags
 
 .c.o	: 
 	$(CC) $(CFLAGS) -c $<
@@ -19,8 +20,8 @@ OBJS	= codegen.o \
 pl0d	: ${OBJS}
 	$(CC) -o $@ ${OBJS}
 
-clean	:
+clean:
 	\rm -rf *~ *.o
 
 tags:
-	etags *.c *.h
+	ctags *.c *.h

@@ -1,0 +1,10 @@
+var x;
+begin
+    x := 0;
+    while x < 3
+    do begin
+        write x;
+        writeln;
+        x := x + 1
+    end
+end.

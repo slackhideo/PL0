@@ -43,7 +43,8 @@ int genCodeV(OpCode op, int v)		/* It generates a code with an address v. e.g. j
 	return cIndex;
 }
 
-int genCodeT(OpCode op, int ti)		/* It generates a code with an operand pointed by an index ti in the name table. e.g. lod, sto, and cal.*/
+int genCodeT(OpCode op, int ti)		/* It generates a code with an operand pointed by an index ti in the name table.
+                                     * e.g. lod, lot, sto, stt and cal.*/
 {
 	checkMax();
 	code[cIndex].opCode = op;
@@ -110,10 +111,14 @@ void updateRef(int i)		/* It updates the array ref. */
 	case lit: flag=1; break;
 	case opr: flag=3; break;
 	case lod: flag=2; break;
+	case lot: flag=2; break;
 	case sto: flag=2; break;
+	case stt: flag=2; break;
 	case cal: flag=5; break;
 	case ret: flag=2; break;
 	case ict: flag=1; break;
+    case uad: flag=2; break;
+    case usb: flag=2; break;
 	case jmp: flag=4; break;
 	case jpc: flag=4; break;
 	}
@@ -134,10 +139,14 @@ void printCode(int i)		/* It prints an instruction code in the address i. */
 	case lit: printf("lit"); flag=1; break;
 	case opr: printf("opr"); flag=3; break;
 	case lod: printf("lod"); flag=2; break;
+	case lot: printf("lot"); flag=2; break;
 	case sto: printf("sto"); flag=2; break;
+	case stt: printf("stt"); flag=2; break;
 	case cal: printf("cal"); flag=5; break;
 	case ret: printf("ret"); flag=2; break;
 	case ict: printf("ict"); flag=1; break;
+    case uad: printf("uad"); flag=2; break;
+    case usb: printf("usb"); flag=2; break;
 	case jmp: printf("jmp"); flag=4; break;
 	case jpc: printf("jpc"); flag=4; break;
 	}
@@ -194,7 +203,17 @@ void execute()			/* It executes generated codes */
 				break;
 		case lod: stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr]; 
 				 break;
+        /* the lot instruction is similar to lod, but it sums the value below
+         * the stack top to use as load place */
+		case lot: --top;
+                 stack[top] = stack[display[i.u.addr.level] + i.u.addr.addr + stack[top]]; 
+                 top++;
+				 break;
 		case sto: stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top]; 
+				 break;
+        /* the stt instruction is similar to sto, but it sums the value below
+         * the stack top to the store place */
+		case stt: stack[display[i.u.addr.level] + i.u.addr.addr + stack[top - 2]] = stack[--top]; 
 				 break;
 		case cal: lev = i.u.addr.level +1;	/* The level of the name of a callee is i.u.addr.level */
 		  /* The level of the body of the callee is i.u.addr.level+1. */
@@ -213,6 +232,22 @@ void execute()			/* It executes generated codes */
 				if (top >= MAXMEM-MAXREG)
 					errorF("stack overflow");
 				break;
+        /* the uad instruction increments by one the value of a variable. It is
+         * a conjunction of a lod, a lit, an opr,add and a sto instructions */
+        case uad:
+                stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr]; 
+                stack[top] = 1; 
+                stack[top-1] += stack[top];
+                stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top]; 
+                break;
+        /* the usb instruction decrements by one the value of a variable. It is
+         * a conjunction of a lod, a lit, an opr,sub and a sto instructions */
+        case usb:
+                stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr]; 
+                stack[top] = 1; 
+                stack[top-1] -= stack[top];
+                stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top]; 
+                break;
 		case jmp: pc = i.u.value; break;
 		case jpc: if (stack[--top] == 0)
 					pc = i.u.value;

@@ -2,6 +2,7 @@
    /**************getSource.c************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "getSource.h"
 
@@ -42,10 +43,19 @@ static struct keyWd KeyWdT[] = {	/* The table containing reserved words, symbols
 	{"end", End},
 	{"if", If},
 	{"then", Then},
+	{"else", Else},      /* added else (used in if-then-else statements) */
+    {"unless", Unless},  /* added unless (used in unless statements) */
+    {"repeat", Repeat},  /* added repeat (used in repeat-until statements) */
+    {"until", Until},    /* added until (used in repeat-until statements) */
 	{"while", While},
 	{"do", Do},
+    {"for", For},        /* added for (used in for-do statements) */
+    {"down", Down},      /* added down (used in for-do statements) */
+    {"to", To},          /* added to (used in for-do statements) */
 	{"return", Ret},
 	{"function", Func},
+    {"procedure", Proc}, /* added procedure (used in procedure declarations) */
+    {"call", Call},      /* added call (used in procedure calls) */
 	{"var", Var},
 	{"const", Const},
 	{"odd", Odd},
@@ -59,6 +69,8 @@ static struct keyWd KeyWdT[] = {	/* The table containing reserved words, symbols
 	{"/", Div},
 	{"(", Lparen},
 	{")", Rparen},
+    {"[", Lbrack}, /* added left square brackets (used in array declaration) */
+    {"]", Rbrack}, /* added right square brackets (used in array declaration) */
 	{"=", Equal},
 	{"<", Lss},
 	{">", Gtr},
@@ -100,6 +112,7 @@ static void initCharClassT()		/* It initializes the table containing kinds of ch
 	charClassT['+'] = Plus; charClassT['-'] = Minus;
 	charClassT['*'] = Mult; charClassT['/'] = Div;
 	charClassT['('] = Lparen; charClassT[')'] = Rparen;
+	charClassT['['] = Lbrack; charClassT[']'] = Rbrack; /* added entries */
 	charClassT['='] = Equal; charClassT['<'] = Lss;
 	charClassT['>'] = Gtr; charClassT[','] = Comma;
 	charClassT['.'] = Period; charClassT[';'] = Semicolon;
@@ -531,10 +544,13 @@ void printcToken()				/* It prints the current token. */
 	} else if (i==(int)Id){							/*　Identfier　*/
 		switch (idKind) {
 		case varId: 
+        case arrayId:
 			fprintf(fptex, "%s", cToken.u.id); return;
 		case parId: 
 			fprintf(fptex, "{\\sl %s}", cToken.u.id); return;
 		case funcId: 
+			fprintf(fptex, "{\\it %s}", cToken.u.id); return;
+		case procId: 
 			fprintf(fptex, "{\\it %s}", cToken.u.id); return;
 		case constId: 
 			fprintf(fptex, "{\\sf %s}", cToken.u.id); return;
@@ -550,11 +566,14 @@ void printcToken()				/* It prints the current token. */
 	} else if (i==(int)Id){							/*　Identfier　*/
 		switch (idKind) {
 		case varId: 
+        case arrayId:
 			fprintf(fptex, "(varId, '%s') ", cToken.u.id); return;
 		case parId: 
 			fprintf(fptex, "(parId, '%s') ", cToken.u.id); return;
 		case funcId: 
 			fprintf(fptex, "(funcId, '%s') ", cToken.u.id); return;
+		case procId: 
+			fprintf(fptex, "(procId, '%s') ", cToken.u.id); return;
 		case constId: 
 			fprintf(fptex, "(constId, '%s') ", cToken.u.id); return;
 		}
@@ -569,10 +588,13 @@ void printcToken()				/* It prints the current token. */
 	} else if (i==(int)Id){							/*　Identfier　*/
 		switch (idKind) {
 		case varId: 
+        case arrayId:
 			fprintf(fptex, "%s", cToken.u.id); return;
 		case parId: 
 			fprintf(fptex, "<i>%s</i>", cToken.u.id); return;
 		case funcId: 
+			fprintf(fptex, "<i>%s</i>", cToken.u.id); return;
+		case procId: 
 			fprintf(fptex, "<i>%s</i>", cToken.u.id); return;
 		case constId: 
 			fprintf(fptex, "<tt>%s</tt>", cToken.u.id); return;
@@ -587,6 +609,3 @@ void setIdKind (KindT k)		 /* It sets the kind of the current token (id) for the
 {
 	idKind = k;
 }
-
-
-

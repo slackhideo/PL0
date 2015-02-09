@@ -8,17 +8,23 @@
  
 #define MAXNAME 31			/* The maximum length of names */
  
-typedef  enum  keys {			/*¡¡Names of reserved words and characters */
+typedef  enum  keys {			/*Names of reserved words and characters */
 	Begin, End,				/* Reserved words */
 	If, Then,
+    Else,
+    Unless,
+    Repeat, Until,
 	While, Do,
+    For, Down, To,
 	Ret, Func, 
+    Proc, Call,
 	Var, Const, Odd,
 	Write, WriteLn,
 	end_of_KeyWd,				/* The end of reserved words */
 	Plus, Minus,				/* Operators and delimiters */
 	Mult, Div,	
 	Lparen, Rparen,
+    Lbrack, Rbrack,
 	Equal, Lss, Gtr,
 	NotEq, LssEq, GtrEq, 
 	Comma, Period, Semicolon,

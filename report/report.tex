@@ -1,0 +1,892 @@
+\documentclass{article}
+\title{Programming Language Processor \\ Report}
+\author{slackhideo}
+\date{\today}
+
+\def\reporttrue{\let\ifreport=\iftrue}
+\def\reportfalse{\let\ifreport=\iffalse}
+%\reportfalse  % question
+\reporttrue  % report
+\usepackage{rail}
+
+
+\begin{document}
+\ifreport
+\maketitle
+\else
+\begin{center}
+{\huge Programming Language Processor Assignment 3}
+\end{center}
+\fi
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Question 1}
+
+To introduce the following do-while statement to PL/0', answer the following questions.
+\begin{description}
+ \item[Production rule] {\it statement}  $\to$ {\bf do} {\it statement} {\bf while} {\it condition}
+ \item[Action] A statement '{\bf do} {\it statement} {\bf while} {\it condition}' works as follows
+	    \begin{enumerate}
+	     \item Execute {\it statement}.
+	     \item If the value of {\it condition} is true, go to the step 1. Otherwise, exit this loop.
+	    \end{enumerate}
+\end{description}
+
+\subsection*{Question 1-1}
+To add a token {\tt do} to a set of starting tokens of {\it statement},
+modify a function {\tt isStBeginKey} in {\tt compile.c} and explain the modification in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+We add the {\tt case Do:} part to the {\tt isStBeginKey} function because the
+statement we are adding begin with the {\tt do} keyword.
+
+
+\subsection*{Question 1-2}
+Modify a function {\tt statement} in {\tt compile.c} 
+so that your PL/0' compiler can output object codes of Fig.\ref{fig:dowhile-code} for
+do-while statements.
+Explain the modificaiton in your report.
+
+\clearpage
+
+\begin{figure}[h]
+\begin{tabular}{ll}
+label1: & Object codes of {\it statement} \\
+        & Object codes of {\it condition} \\
+        & jpc label2 \\
+        & jmp label1 \\
+label2: & \\
+\end{tabular}
+\caption{Object codes for a do-while statement}
+\label{fig:dowhile-code}
+\end{figure}
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer
+
+We include the following code to {\tt statement} function:
+
+\begin{verbatim}
+case Do:                            /* do-while statement */
+    token = nextToken();            /* gets the next token */
+    backP2 = nextCode();            /* target address for the jump at the end */
+    statement();                    /* a statement */
+    token = checkGet(token, While); /* next token must be "while" */
+    condition();                    /* a condition */
+    backP = genCodeV(jpc, 0);       /* a conditional jump to the end */
+    genCodeV(jmp, backP2);          /* a jump to the beginning of do-while
+                                                                    statement */
+    backPatch(backP);               /* adjusts the jpc target address */
+    return;
+\end{verbatim}
+
+
+\subsection*{Question 1-3}
+What does your PL/0' compiler outputs when your PL/0' compiler compiles
+and executes a PL/0' program do.pl0 of Fig. \ref{fig:do-while}?
+
+\begin{figure}[h]
+\begin{verbatim}
+var x;
+begin
+   x := 0;
+   do begin
+      write x;
+      writeln;
+      x := x + 1
+   end
+   while x < 3
+end.
+\end{verbatim}
+\caption{A test program {\tt do.pl0}}\label{fig:do-while}
+\end{figure}
+
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+It outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+0
+1
+2
+\end{verbatim}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Question 2}
+Answer the following questions to add the following repeat-until statement to PL/0'.
+
+\begin{description}
+ \item[Production rule] {\it statement}  $\to$ {\bf repeat} {\it statement} {\bf until} {\it condition}
+ \item[Action] A statement '{\bf repeat} {\it statement} {\bf until} {\it condition}' works as follows.
+	    \begin{enumerate}
+	     \item Execute {\it statement}.
+	     \item If the value of {\it condition} is false, go to the step 1. Otherwise, exit this loop.
+	    \end{enumerate}
+\end{description}
+
+\subsection*{Question 2-1}
+Write object codes for the repeat-until statement 
+like object codes for the do-while statement of Fig.\ref{fig:dowhile-code}.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer
+
+\begin{figure}[h]
+\begin{tabular}{ll}
+label1: & Object code of {\it statement} \\
+        & Object code of {\it condition} \\
+        & jpc label1 \\
+\end{tabular}
+\end{figure}
+
+
+\subsection*{Question 2-2}
+Modify {\tt getSource.h} and {\tt getSource.c} to register two tokens
+{\tt repeat} and {\tt until} to your PL/0' compiler.
+Explain the modification in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+In {\tt getSource.h} we add the following line;
+
+\begin{verbatim}
+Repeat, Until,
+\end{verbatim}
+
+in the {\tt typedef  enum  keys KeyId} block. And in {\tt getSource.c}, we add:
+
+\begin{verbatim}
+{"repeat", Repeat},
+{"until", Until},
+\end{verbatim}
+
+to add {\tt repeat} and {\tt until} as reserved words and make the compiler
+recognize them.
+
+
+\subsection*{Question 2-3}
+To add a token {\tt repeat} to a set of starting tokens of {\it statement},
+modify a function {\tt isStBeginKey} in {\tt compile.c} and explain the modification in you report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+We add the {\tt case Repeat:} part to the {\tt isStBeginKey} function because
+ the statement we are adding begin with the {\tt Repeat} keyword.
+
+
+\subsection*{Question 2-4}
+Modify a function {\tt statement} in {\tt compile.c}
+so that your PL/0' compiler can output object codes for repeat-until statements.
+Explain the modificaiton in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+We include the following code to {\tt statement} function:
+
+\begin{verbatim}
+case Repeat:                        /* repeat-until statement */
+    token = nextToken();            /* gets the next token */
+    backP = nextCode();             /* target address for the jump at the end */
+    statement();                    /* a statement */
+    token = checkGet(token, Until); /* next token must be "until" */
+    condition();                    /* a condition */
+    genCodeV(jpc, backP);           /* a conditional jump to the beginning of
+                                                       repeat-until statement */
+    return;
+\end{verbatim}
+
+
+\subsection*{Question 2-5}
+What does your PL/0' compiler outputs when your PL/0' compiler compiles
+and executes a PL/0' program {\tt repeat.pl0} of Fig.\ref{fig:repeat-until}?
+
+\begin{figure}[h]
+\begin{verbatim}
+var x;
+begin
+   x := 0;
+   repeat begin
+      write x; 
+      writeln;
+      x := x + 1
+   end
+   until x=3
+end.
+\end{verbatim}
+\caption{A test program {\tt repeat.pl0}}\label{fig:repeat-until}
+\end{figure}
+
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+It outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+0
+1
+2
+\end{verbatim}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Question 3}
+Answer the following questions to add the following if-then-else statement to PL/0'.
+
+\begin{description}
+ \item[Production rule] {\it statement}  $\to$ {\bf if} {\it condition} {\bf then} 
+       ${\it statement}_1$ ({\bf else} ${\it statement}_2$ $\vert$ {$\epsilon$})
+ \item[Action] A statement '{\bf if} {\it condition} {\bf then} 
+	    ${\it statement}_1$ ({\bf else} ${\it statement}_2$ $\vert$ {$\epsilon$})'
+	    works as follows.
+	    \begin{enumerate}
+	     \item Evaluate {\it condition}.
+	     \item If the value of {\it condition} is true, execute ${\it statement}_1$.
+	     \item If the value of {\it condition} is false and ${\it statement}_2$ exists, 
+		   execute ${\it statement}_2$.
+	    \end{enumerate}
+ \item[Description] To resolve ambiguity of the grammar of PL/0', 
+	    we use the following rule.
+	    \begin{itemize}
+	     \item When we find an {\bf else}, we relate the {\bf else} to the nearest {\bf then}
+		   which has not be related to any {\bf else} yet.
+	    \end{itemize}
+\end{description}
+
+
+\subsection*{Question 3-1}
+Write object codes for 
+a statement '{\bf if} {\it condition} {\bf then}
+${\it statement}_1$ {\bf else} ${\it statement}_2$'
+like object codes for a do-while statement of Fig.\ref{fig:dowhile-code}.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+\begin{figure}[h]
+\begin{tabular}{ll}
+        & Object code of {\it condition} \\
+        & jpc label1 \\
+        & Object code of {\it statement1} \\
+        & jmp label2 \\
+label1: & Object code of {\it statement2} \\
+label2: & \\
+\end{tabular}
+\end{figure}
+
+
+\subsection*{Question 3-2}
+Modify {\tt getSource.h} and {\tt getSource.c} to register a token
+{\tt else} to your PL/0' compiler.
+Explain the modification in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+In {\tt getSource.h} we add the following line;
+
+\begin{verbatim}
+Else,
+\end{verbatim}
+
+in the {\tt typedef  enum  keys KeyId} block. And in {\tt getSource.c}, we add:
+
+\begin{verbatim}
+{"else", Else},
+\end{verbatim}
+
+to add {\tt else} as reserved words and make the compiler recognize them.
+
+
+\subsection*{Question 3-3}
+Modify a function {\tt statement} in {\tt compile.c}
+so that your PL/0' compiler can output object codes for if-then-else statements.
+Explain the modificaiton in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+We include some code in the {\tt case If} part of {\tt statement} function, as
+follows:
+
+\begin{verbatim}
+case If:                           /* if-then-else statement */
+    token = nextToken();           /* gets the next token */
+    condition();                   /* a conditional expression */
+    token = checkGet(token, Then); /* next token must be "then" */
+    backP = genCodeV(jpc, 0);      /* a conditional jump (to the end if it is
+                                      an if-then statement, or to the second
+                                      statement if it is an if-then-else
+                                                                    statement */
+    statement();                   /* a statement just after "then" */
+    if(token.kind == Else) {       /* verifies if it is an if-then-else
+                                                                    statement */
+        token = nextToken();       /* gets the next token */
+        backP2 = genCodeV(jmp, 0); /* a jump to the end of the statement */
+        backPatch(backP);          /* adjusts the jpc target address */
+        statement();               /* a statement after "else" */
+        backPatch(backP2);         /* adjusts the jmp target address */
+    }
+    else {
+        backPatch(backP);          /* adjusts the jpc target address */
+    }   
+    return;
+\end{verbatim}
+
+
+\subsection*{Question 3-4}
+What does your PL/0' compiler outputs when your PL/0' compiler compiles
+and executes a PL/0' program else.pl0 of Fig.\ref{fig:if-then-else}?
+
+\clearpage
+
+\begin{figure}[h]
+\begin{verbatim}
+var x;
+begin
+   x := 0;
+   while x<3 do begin
+      if x < 1 then write 0
+      else if x < 2 then write 1
+      else write 2;
+      writeln;
+      x := x+1;
+   end;
+end.
+\end{verbatim}
+\caption{A test program else.pl0}\label{fig:if-then-else}
+\end{figure}
+
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+It outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+0 
+1 
+2 
+\end{verbatim}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Question 4}
+Answer the following questions to introduce one-dimensional array to PL/0'.
+
+
+\subsection*{Question 4-1}
+Explain how to modify the grammar of PL/0' to introduce one-dimensional array to PL/0'.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+In order to add one-dimensional array feature in PL/0', we can do the following
+changes:
+
+\begin{rail}
+    varDecl: "var" ("ident" ("[" "number" "]") ? + ",") ";"
+\end{rail}
+
+\begin{rail}
+    statement: ("ident" ("[" expression "]")? ":=" expression)?
+\end{rail}
+
+\begin{rail}
+    factor: "ident" ("[" expression "]")?
+\end{rail}
+
+The {\it varDecl} modification is needed to declare arrays. It accepts an
+{\tt ident} as an identifier and an {\tt number} as the size.\\
+The {\it statement} modification lets the array (an element of the array) to
+receive a value.\\
+The {\it factor} modification is for getting a value from the array (from a
+specified position of the array).\\
+Please note that are only shown the modified parts.
+The rest of {\it statement} diagram, {\it factor} diagram and the other needed
+diagrams are identical to the original ones.\\
+
+\subsection*{Question 4-2}
+Do you need new instructions to the PL/0' virtual machine for one-dimensional array?
+If you need new instructions, define thier mnemonics and their actions. 
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+Yes, I needed to add two more instructions to the PL/0' virtual machine.
+They are:\\
+
+\noindent\textbf{\Large lot}\\
+
+\noindent\textbf{Overview}\\
+\indent Push a value of a variable (especially useful for arrays)
+ to the stack considering the value of stack top.\\
+
+\noindent\textbf{Mnemonic}\\
+\indent \texttt{lot,LEVEL,ADDR}\\
+
+\noindent\textbf{Description}\\
+\indent LEVEL is a nesting level in a source PL/0' program.
+ ADDR is a relative address.\\
+
+\noindent\textbf{Details}\\
+\indent \texttt{top--;\\
+\indent stack[top] = stack[display[LEVEL] + ADDR + stack[top]];\\
+\indent top++;}\\
+
+\vspace{0.5cm}
+
+\noindent\textbf{\Large stt}\\
+
+\noindent\textbf{Overview}\\
+\indent Store a value on the stack top to a variable on the stack,
+considering the value below of stack top.\\
+
+\noindent\textbf{Mnemonic}\\
+\indent \texttt{stt,LEVEL,ADDR}\\
+
+\noindent\textbf{Description}\\
+\indent LEVEL is a nesting level in a source PL/0' program.
+ ADDR is a relative address.\\
+
+\noindent\textbf{Details}\\
+\indent \texttt{stack[display[LEVEL] + ADDR + stack[top - 2]] = stack[--top];}\\
+
+
+\subsection*{Question 4-3}
+Modify your PL/0' compiler so that it can support one-dimensional array.
+Explain the modification in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+In addition to the new instructions added in {\tt codegen.h} and
+ {\tt codegen.c}, I also modified the {\tt compile.c} file:
+
+\begin{itemize}
+    \item In {\tt varDecl} function, I introduced the array declaration method
+    described in Question 4-1, getting the array size as a number (I tried to
+    use {\tt expression}, but determining the starting addresses of arrays
+    dynamically is quite complex). To store the array in the name table, I
+    use a function {\tt enterTarray}, which is similar to {\tt enterTvar}
+    but uses the array size as a parameter.
+    \item In {\tt statement} function, I introduced the value assignment
+    method, as described in Question 4-1. Here I use the {\tt stt} instruction.
+    \item In {\tt factor} function, I introduced the value retrieval method,
+    as described in Question 4-1. Here I use the {\tt lot} instruction.
+\end{itemize}
+
+In {\tt getSource.h} file, I registered {\tt Lbrack} and {\tt Rbrack} in the
+{\tt typedef  enum  keys KeyId}.\\
+
+In {\tt getSource.c} file, I added the following lines to
+{\tt struct keyWd KeyWdT[]}:
+
+\begin{verbatim}
+{"[", Lbrack}, /* added left square brackets (used in array declaration) */
+{"]", Rbrack}, /* added right square brackets (used in array declaration) */
+\end{verbatim}
+
+and the following line to {\tt initCharClassT} function:
+
+\begin{verbatim}
+charClassT['['] = Lbrack; charClassT[']'] = Rbrack;
+\end{verbatim}
+
+Also, I added support for printing the arrays in HTML (although they are shown
+in HTML files as {\tt varId}, I included a kind {\tt arrayId}, used in
+internals).\\
+
+In {\tt table.h} file, I included the kind {\tt arrayId}.\\
+
+In {\tt table.c} file, I included the function {\tt enterTarray}, which
+registers an array into the name table.\\
+
+\subsection*{Question 4-4}
+Write a simple test program {\tt array.pl0} for one-dimensional array.
+Explain the test program and what your PL/0' compiler outputs when it
+compiles and executes the test program.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+A simple test program is:
+
+\begin{verbatim}
+var small[2], another[3];
+begin
+    small[0] := 5 + 7;
+    small[1] := small[0];
+    another[4 / 2] := 2 * small[1];
+    write small[1];
+    writeln;
+    write another[1 + 1];
+    writeln
+end.
+\end{verbatim}
+
+This test program exercises creation of multiple arrays, assignment of
+expressions of numbers, expressions using arrays and expressions to calculate
+the index.\\
+My PL/0' compiler outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+12 
+24
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Question 5}
+Answer the following questions to introduce procedures (functions withaout any return values) to PL/0'.
+
+We use the following statement to call a procedure with $n$ arguments.
+\begin{quote}
+ {\bf call} {\it procedure}($arg_1$, $arg_2$, $\dots$, $arg_n$)
+\end{quote}
+
+
+\subsection*{Question 5-1}
+Explain how to modify the grammar of PL/0' to introduce procedures to PL/0'.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+In order to add procedure declarations and procedure calls features in PL/0',
+we can do the following changes:\\
+
+\begin{rail}
+    block: (((() + constDecl)
+             (() + varDecl)
+             (() + funcDecl)
+             (() + procDecl)) +
+    ()) statement
+\end{rail}
+
+\begin{rail}
+    procDecl: "procedure" "ident" "(" ("ident" + ",")? ")" block ";"
+\end{rail}
+
+\begin{rail}
+    statement: (("call" "ident" "(" (expression + ",")? ")")
+             | ("return" expression?))?
+\end{rail}
+
+The \emph{block} modification is needed to declare procedures. It adds a
+{\tt procDecl} (procedure declaration) section.\\
+The \emph{procDecl} is similar to \emph{funcDecl}, but it uses the
+{\tt procedure} keyword.\\
+The \emph{statement} introduces the {\tt call} statement, which accepts the
+{\tt call} keyword, then an {\tt ident} as the procedure identifier and then
+the parameters, if there is any. It makes possible to call procedures.
+Also, {\tt return} statement was modified to accept an {\tt expression} or
+not.\\
+Please note that are only shown the modified parts.
+The other sections are the same as the original diagram.\\
+
+\subsection*{Question 5-2}
+Do you need new instructions to the PL/0' virtual machine for procedures?
+If you need new instructions, define thier mnemonics and their actions. 
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+No, I did not need any new instructions.
+
+\subsection*{Question 5-3}
+Modify your PL/0' compiler so that it can support procedures.
+Explain the modification in your report.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+I did the following modifications:
+
+\begin{itemize}
+    \item In {\tt getSource.h} file, I added {\tt Proc} and {\tt Call} in the
+        {\tt typedef  enum  keys KeyId}.
+    \item In {\tt getSource.c} file, I added {\tt \{"procedure", Proc\}} and
+        {\tt \{"call", Call\}} entries in the {\tt struct keyWd KeyWdT[]}.
+        Also, I added support for printing the procedures in HTML.
+    \item In {\tt table.h} file, I included the kind {\tt procId}.
+    \item In {\tt table.c} file, I included the function {\tt enterTproc},
+        which registers a procedure into the name table.
+    \item In {\tt compile.c} file, I did the following changes:
+        \begin{itemize}
+            \item In {\tt block} function, I included the {\tt procDecl()}
+                function call, as shown in the \emph{block} syntax diagram of
+                Question 5-1.
+            \item Added the {\tt procDecl()} function, which compiles procedure
+                declarations, as shown in the \emph{procDecl} syntax diagram
+                of Question 5-1.
+            \item In {\tt statement} function, I modified the {\tt return}
+                statement to accept an {\tt expression} or no return value
+                (used in the case of procedures). Also, I introduced the {\tt
+                call} statement, as shown in the \emph{statement} syntax
+                diagram of Question 5-1.
+        \end{itemize}
+\end{itemize}
+
+\clearpage
+
+\subsection*{Question 5-4}
+Write a simple test program {\tt proc.pl0} for procedures.
+Explain the test program and what your PL/0' compiler outputs when it
+compiles and executes the test program.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+A simple test program is:
+
+\begin{verbatim}
+var primes[5];
+
+procedure search(x, size)
+begin
+    if size = 0 then
+        return;
+
+    if primes[size - 1] = x then
+        begin
+            write size - 1;
+            writeln
+        end
+    else
+        call search(x, size - 1)
+end;
+
+
+begin
+    primes[0] := 2;
+    primes[1] := 3;
+    primes[2] := 5;
+    primes[3] := 7;
+    primes[4] := 11;
+    call search(7,5);
+end.
+\end{verbatim}
+
+This test program exercises procedures using multiple parameters and recursive
+procedure calls. The procedure takes a number to search for and an array size
+and prints the array index of the number if it is in the array, otherwise it
+does nothing.\\
+
+My PL/0' compiler outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+3
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section*{Question 6}
+Introduce your own idea to your PL/0' compiler.
+
+\ifreport
+(Answer)\\
+\fi
+% Write your answer.
+
+I introduced the \emph{for-do statement} into my PL/0' compiler. The
+corresponding syntax diagram is as follows:
+
+\begin{rail}
+    statement: "for" "ident" ":=" expression ("to" | "down" "to") expression
+               "do" statement
+\end{rail}
+
+The object code for \emph{for-do statement} is:\\
+
+\begin{figure}[h]
+\begin{tabular}{ll}
+        & Object code for the variable initialisation \\
+label1: & Object code for the condition \\
+        & jpc label2 \\
+        & Object code of {\it statement} \\
+        & Object code for updating the "for variable" \\
+        & jmp label1 \\
+label2:
+\end{tabular}
+\end{figure}
+
+I introduced two more instructions to the PL/0' virtual machine just to make
+the code cleaner and more concise. They are:\\
+
+\noindent\textbf{\Large uad}\\
+
+\noindent\textbf{Overview}\\
+\indent Increment by one the value of a variable. It is  a conjunction of
+a lod, a lit, an opr,add and a sto instructions.\\
+
+\noindent\textbf{Mnemonic}\\
+\indent \texttt{uad,LEVEL,ADDR}\\
+
+\noindent\textbf{Description}\\
+\indent LEVEL is a nesting level in a source PL/0' program.
+ ADDR is a relative address.\\
+
+\noindent\textbf{Details}\\
+\indent \texttt{stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr];\\
+\indent stack[top] = 1;\\
+\indent stack[top-1] += stack[top];\\
+\indent stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top];}\\
+
+\vspace{0.5cm}
+
+\noindent\textbf{\Large usb}\\
+
+\noindent\textbf{Overview}\\
+\indent Decrement by one the value of a variable. It is a conjunction of
+a lod, a lit, an opr,sub and a sto instructions.\\
+
+\noindent\textbf{Mnemonic}\\
+\indent \texttt{usb,LEVEL,ADDR}\\
+
+\noindent\textbf{Description}\\
+\indent LEVEL is a nesting level in a source PL/0' program.
+ ADDR is a relative address.\\
+
+\noindent\textbf{Details}\\
+\indent \texttt{stack[top++] = stack[display[i.u.addr.level] +
+    i.u.addr.addr];\\
+\indent stack[top] = 1;\\
+\indent stack[top-1] -= stack[top];\\
+\indent stack[display[i.u.addr.level] + i.u.addr.addr] = stack[--top];}\\
+
+To implement the \emph{for-do statement}, I did the following modifications:
+
+\begin{itemize}
+    \item In {\tt codegen.h} file, I added {\tt uad} and {\tt usb} instructions
+        in the {\tt typedef enum codes OpCode}.
+    \item In {\tt codegen.c} file, I implemented the new instructions's
+        behaviour in the {\tt execute} function.
+    \item In {\tt getSource.h} file, I added {\tt For}, {\tt Down} and {\tt To}
+        keywords in the {\tt typedef  enum  keys KeyId}.
+    \item In {\tt getSource.c} file, I added {\tt \{"for", For\}},
+        {\tt \{"down", Down\}}  and {\tt \{"to", To\}} entries in the {\tt struct keyWd KeyWdT[]}.
+    \item In {\tt compile.c} file, I modified the {\tt statement} function,
+        including a For case in the main switch, implementing the compilation
+        of the \emph{for-do statement}, supporting both incrementing and
+        decrementing for loops. This implementation follows the syntax diagram
+        shown above and the object code. It also uses the two new instructions
+        {\tt uad} (for incrementing) and {\tt usb} (for decrementing) for
+        updating the value of the for loop variable. And the {\tt For} token
+        was added in the {\tt isStBeginKey} function as a {\tt statement}
+        beginning token.
+\end{itemize}
+
+A simple test program is:
+
+\clearpage
+
+\begin{verbatim}
+var i, a[10];
+
+begin
+    for i := 0 to 9 do
+        a[i] := 2 * (i + 1);
+
+    for i := 0 to 9 do begin
+        write a[i];
+        writeln
+    end;
+
+    writeln;
+
+    for i := 9 down to 0 do begin
+        write a[i];
+        writeln
+    end
+end.
+\end{verbatim}
+
+This test program exercises \emph{for-do statement} in both incrementing and
+decrementing versions, as well its combination with arrays.\\
+
+My PL/0' compiler outputs:
+\begin{verbatim}
+; start compilation
+; start execution
+2 
+4 
+6 
+8 
+10 
+12 
+14 
+16 
+18 
+20 
+
+20 
+18 
+16 
+14 
+12 
+10 
+8 
+6 
+4 
+2 
+\end{verbatim}
+
+\end{document}

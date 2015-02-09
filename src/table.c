@@ -39,6 +39,8 @@ static char* kindName(KindT k)		/* It returns the string of a kind of names */
 	case parId: return "par";
 	case funcId: return "func";
 	case constId: return "const";
+    case arrayId: return "array";
+    case procId: return "proc";
 	}
 }
 
@@ -79,7 +81,7 @@ int fPars()					/* It returns the number of parameters of the current block. */
 void enterT(char *id)			/* It records a name id in the name table. */
 {
 	if (tIndex++ < MAXTABLE){
-		strcpy(nameTable[tIndex].name, id);
+		cpystr(nameTable[tIndex].name, id);
 	} else 
 		errorF("too many names");
 }
@@ -93,6 +95,16 @@ int enterTfunc(char *id, int v)		/* It records the name and the starting address
 	nameTable[tIndex].u.f.pars = 0;  			 /* The initial number of parameters */
 	tfIndex = tIndex;
 	return tIndex;
+}
+
+int enterTproc(char *id, int v) { /* records the name and the starting address of a procedure in the name table */
+    enterT(id);                                /* records the procedure's name in name table */
+    nameTable[tIndex].kind = procId;           /* it is a procedure */
+    nameTable[tIndex].u.f.raddr.level = level; /* the level of the procedure */
+    nameTable[tIndex].u.f.raddr.addr = v;      /* starting address of the procedure */
+    nameTable[tIndex].u.f.pars = 0;            /* initial number of parameters */
+    tfIndex = tIndex;
+    return tIndex;
 }
 
 int enterTpar(char *id)				/* It records parameters in the name table. */
@@ -111,6 +123,15 @@ int enterTvar(char *id)			/* It records a variable name in the name table. */
 	nameTable[tIndex].u.raddr.level = level;
 	nameTable[tIndex].u.raddr.addr = localAddr++;
 	return tIndex;
+}
+
+int enterTarray(char *id, int size) { /* records an array name into the name table */
+    enterT(id);
+    nameTable[tIndex].kind = arrayId;
+    nameTable[tIndex].u.raddr.level = level;
+    nameTable[tIndex].u.raddr.addr = localAddr;
+    localAddr += size;
+    return tIndex;
 }
 
 int enterTconst(char *id, int v)		/* It records a constant and its value in the name table. */
@@ -140,7 +161,7 @@ int searchT(char *id, KindT k)		/* It returns the index of an element whose name
 {
 	int i;
 	i = tIndex;
-	strcpy(nameTable[0].name, id);			/* It puts a sentinel at the beginning of the name table. */
+	cpystr(nameTable[0].name, id);			/* It puts a sentinel at the beginning of the name table. */
 	while( strcmp(id, nameTable[i].name) )
 		i--;
 	if ( i )							/* It finds the name. */
@@ -177,3 +198,9 @@ int frameL()				/* The maximum relative address of variables in a block */
 	return localAddr;
 }
 
+/* local implementaion of strcpy to avoid warnings during the compilation */
+void cpystr(char *dest, const char *src) {
+    int i = 0;
+    while((dest[i] = src[i]) != '\0')
+        i++;
+}

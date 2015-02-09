@@ -1,0 +1,14 @@
+var a[15],b;
+begin
+b := 5;
+for b := 65/65 to 16/4 do begin
+    write b;
+    writeln;
+    a[b] := b;
+end;
+writeln;
+for b := 14 down to 1*1 do begin
+    write a[b];
+    writeln;
+end
+end.

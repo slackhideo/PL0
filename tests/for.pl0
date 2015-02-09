@@ -1,0 +1,18 @@
+var i, a[10];
+
+begin
+    for i := 0 to 9 do
+        a[i] := 2 * (i + 1);
+
+    for i := 0 to 9 do begin
+        write a[i];
+        writeln
+    end;
+
+    writeln;
+
+    for i := 9 down to 0 do begin
+        write a[i];
+        writeln
+    end
+end.

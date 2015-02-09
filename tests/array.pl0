@@ -1,0 +1,10 @@
+var small[2], another[3];
+begin
+    small[0] := 5 + 7;
+    small[1] := small[0];
+    another[4 / 2] := 2 * small[1];
+    write small[1];
+    writeln;
+    write another[1 + 1];
+    writeln
+end.

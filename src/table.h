@@ -2,7 +2,7 @@
  /***********table.h***********/
 
 typedef enum kindT {		/* Kinds of identifiers */
-	varId, funcId, parId, constId
+	varId, funcId, parId, constId, arrayId, procId
 }KindT;
 typedef struct relAddr{		/* The structure for variables, parameters and function addresses */
 	int level;
@@ -14,7 +14,9 @@ void blockEnd();			/* It is called when a block ends. */
 int bLevel();				/* It returns the level of the current block. */
 int fPars();				/* It returns the number of parameters of the current block. */
 int enterTfunc(char *id, int v);	/* It records the name and the starting address of a function in the name table. */
+int enterTproc(char *id, int v); /* records the name and the starting address of a procedure in the name table */
 int enterTvar(char *id);		/* It records a variable name in the name table. */
+int enterTarray(char *id, int size); /* records an array name into the name table */
 int enterTpar(char *id);		/* It records parameters in the name table. */
 int enterTconst(char *id, int v);	/* It records a constant and its value in the name table. */
 void endpar();				/* It is called when parameters end. */
@@ -28,4 +30,4 @@ RelAddr relAddr(int ti);		/* It returns the address of the i-th element in the n
 int val(int ti);				/* It returns the value of the i-th element in the name table. */
 int pars(int ti);				/* It returns the number of parameters of a function (the i-th element in the name table). */
 int frameL();				/* The maximum relative address of variables in a block */
-
+void cpystr(char *dest, const char *src);

@@ -18,6 +18,7 @@ static void block(int pIndex);	/* It compiles a block */
 static void constDecl();			/* It compiles a constant declaration. */
 static void varDecl();				/* It compiles a variable declaration. */
 static void funcDecl();			/* It compiles a function declaration. */
+static void procDecl();             /* it compiles a procedure declaration */
 static void statement();			/* It compiles a statement. */
 static void expression();			/* It compiles an expression. */
 static void term();				/* It compiles a term of an expression. */
@@ -56,6 +57,9 @@ void block(int pIndex)		/* pIndex is the index of the function name of this bloc
 		case Func:				/* A function declaration */
 			token = nextToken();
 			funcDecl(); continue;
+        case Proc:              /* procedure declaration */
+            token = nextToken();
+            procDecl(); continue;
 		default:				/* Otherwise, it is the end of declarations. */
 			break;
 		}
@@ -98,18 +102,36 @@ void constDecl()			/* It compiles a constant declaration. */
 
 void varDecl()				/* It compiles a variable declaration. */
 {
+    char storeId[MAXNAME]; /* stores the ident to put it in the table */
+    int arraySize; /* stores the array size */
+
 	while(1){
 		if (token.kind==Id){
-			setIdKind(varId);		/* It sets the kind of the token for printing. */
-			enterTvar(token.u.id);		/* It records the name of a variable in the name table whose address will be determined by the name table. */
+            cpystr(storeId, token.u.id);
+            setIdKind(varId);		/* It sets the kind of the token for printing. */
 			token = nextToken();
-		}else
+            if(token.kind == Lbrack) { /* array declaration */
+                token = nextToken();
+                if(token.kind == Num) {
+                    arraySize = token.u.value; /* gets the array size */
+                }
+                token = checkGet(token, Num); /* it must be a number */
+                token = checkGet(token, Rbrack); /* it must be a right square brackets */
+                enterTarray(storeId, arraySize); /* puts the name of a variable in the name table */
+            }
+            else { /* simple variable */
+                enterTvar(storeId);		/* It records the name of a variable in the name table whose address will be determined by the name table. */
+            }
+		}
+        else
 			errorMissingId();
+
 		if (token.kind!=Comma){		/* If the next token is a commna, it will be followed by a variable declaration. */
 			if (token.kind==Id){	/* If the next token is a name, it assumes there must be a comma. */
 				errorInsert(Comma);
 				continue;
-			}else
+			}
+            else
 				break;
 		}
 		token = nextToken();
@@ -142,7 +164,7 @@ void funcDecl()			/* It compiles a function declaration. */
 			}
 			token = nextToken();
 		}
-		token = checkGet(token, Rparen);		/* It must ed with ")". */
+		token = checkGet(token, Rparen);		/* It must end with ")". */
 		endpar();				/* It declares the end of parameters to the name table. */
 		if (token.kind==Semicolon){
 			errorDelete();
@@ -154,34 +176,109 @@ void funcDecl()			/* It compiles a function declaration. */
 		errorMissingId();			/* No function name. */
 }
 
+void procDecl() { /* it compiles a procedure declaration */
+    int pIndex; /* stores the procedure index in the name table */
+    if(token.kind == Id) {
+        setIdKind(procId); /* sets the kind of the token for printing */
+        pIndex = enterTproc(token.u.id, nextCode()); /* records the procedure in the name table */
+        token = checkGet(nextToken(), Lparen); /* it must be a "(" */
+        blockBegin(FIRSTADDR); /* changes the level */
+        while(1) {
+            if(token.kind == Id) { /* procedure has parameters */
+                setIdKind(parId); /* sets the kind of the token for printing */
+                enterTpar(token.u.id); /* records the parameters in the name table */
+                token = nextToken();
+            }
+            else {
+                break;
+            }
+
+            if(token.kind != Comma) { /* if the next token is a comma, expect another parameter */
+                if(token.kind == Id) { /* if the next token is an ident, assumes there must be a comma */
+                    errorInsert(Comma);
+                    continue;
+                }
+                else {
+                    break;
+                }
+            }
+
+            token = nextToken();
+        }
+        token = checkGet(token, Rparen); /* it must be a ")" */
+        endpar(); /* end of parameters */
+        if(token.kind == Semicolon) {
+            errorDelete();
+            token = nextToken();
+        }
+        block(pIndex); /* compiles a block using the procedure index
+                        * in the name table as parameter */
+        token = checkGet(token, Semicolon); /* it must end with ";" */
+    }
+    else {
+        errorMissingId(); /* missing procedure ident */
+    }
+}
+
 void statement()			/* It compiles a statement. */
 {
 	int tIndex;
 	KindT k;
 	int backP, backP2;	/* Variables to record addresses of codes whose address parts must be adjusted later */
+    int i; /* for counting the argument number */
 
 	while(1) {
 		switch (token.kind) {
 		case Id:					/* An assignment statement */
 			tIndex = searchT(token.u.id, varId);	/* The index of a left-hand variable */
 			setIdKind(k=kindT(tIndex));		/* It sets the kind of the left-hand variable for printing. */
-			if (k != varId && k != parId) 		/* The left-hand variable must be a variable or a parameter. */
-				errorType("var/par");
-			token = checkGet(nextToken(), Assign);			/* It must be ":=". */
-			expression();					/* It compiles an expression. */
-			genCodeT(sto, tIndex);	  /* A code to store the right-hand value in the left-hand variable */
+			if (k != varId && k != parId && k != arrayId) /* The left-hand variable must be a variable, an array or a parameter. */
+				errorType("var/array/par");
+            if(k == arrayId) { /* in case of arrays */
+                token = checkGet(nextToken(), Lbrack); /* it must be a "[" */
+                expression();
+                token = checkGet(token, Rbrack); /* it must be a "]" */
+                token = checkGet(token, Assign); /* it must be a ":=" */
+                expression();
+                genCodeT(stt, tIndex); /* stores the right-hand value in the array position
+                                        * specified by the expression in the left-hand variable (array) */
+            }
+            else {
+                token = checkGet(nextToken(), Assign);			/* It must be ":=". */
+                expression();					/* It compiles an expression. */
+                genCodeT(sto, tIndex);	  /* A code to store the right-hand value in the left-hand variable */
+            }
 			return;
-		case If:					/* An if-statement */
+		case If:                           /* if-then-else statement */
 			token = nextToken();
-			condition();					/* A conditional expression */
-			token = checkGet(token, Then);		/* It must be "then". */
-			backP = genCodeV(jpc, 0);			/* A conditional jump */
-			statement();					/* A statement just after "then" */
-			backPatch(backP);				/* It adjusts the target address of the conditional jump. */
+			condition();                   /* a conditional expression */
+			token = checkGet(token, Then); /* it must be "then". */
+			backP = genCodeV(jpc, 0);      /* a conditional jump */
+			statement();                   /* a statement just after "then" */
+            if(token.kind == Else) {       /* verify if it is an if-then-else */
+                token = nextToken();
+                backP2 = genCodeV(jmp, 0); /* jump to the end */
+                backPatch(backP);          /* adjusts the jpc target address */
+                statement();               /* a statement after "else" */
+                backPatch(backP2);         /* adjusts the jmp target address */
+            }
+            else {
+                backPatch(backP);          /* adjusts the jpc target address */
+            }
 			return;
 		case Ret:					/* A return statement */
 			token = nextToken();
-			expression();					/* An expression */
+            switch(token.kind) {
+                case Plus: /* cases in which an expression is expected */
+                case Minus:
+                case Id:
+                case Num:
+                case Lparen:
+                    expression(); /* an expression */
+                    break;
+                default: /* cases in which no return value is expected */
+                    break;
+            }
 			genCodeR();					/* A return code */
 			return;
 		case Begin:				/* A begin-end statement */
@@ -205,7 +302,7 @@ void statement()			/* It compiles a statement. */
 					token = nextToken();
 				}
 			}
-		case While:				/*¡¡A while-statement */
+		case While:				/* A while-statement */
 			token = nextToken();
 			backP2 = nextCode();  /* The target address of the jump at the end of the while-statment. */
 			condition();				/* A condiional expression */
@@ -222,8 +319,124 @@ void statement()			/* It compiles a statement. */
 			return;
 		case WriteLn:			/* A code to write a new line */
 			token = nextToken();
-			genCodeO(wrl);				/* A code to wirte a new line¡¡*/
+			genCodeO(wrl);				/* A code to wirte a new line */
 			return;
+        case Unless:                       /* unless statement */
+            token = nextToken();
+            condition();                   /* a condition expression */
+            backP = genCodeV(jpc, 0);      /* a conditional jump to statement */
+            backP2 = genCodeV(jmp, 0);     /* a jump to skip the statement */
+            token = checkGet(token, Then); /* next token must be "then" */
+            backPatch(backP);              /* adjusts the jpc target address */
+            statement();                   /* a statement */
+            backPatch(backP2);             /* adjusts the jmp target address */
+            return;
+        case Do:                            /* do-while statement */
+            token = nextToken();
+            backP2 = nextCode();            /* target address of statement */
+            statement();
+            token = checkGet(token, While); /* next token must be "while" */
+            condition();
+            backP = genCodeV(jpc, 0);       /* a conditional jump to the end */
+            genCodeV(jmp, backP2);          /* a jump to the statement */
+            backPatch(backP);               /* adjusts the jpc target address */
+            return;
+        case Repeat:                        /* repeat-until statement */
+            token = nextToken();
+            backP = nextCode();             /* target address of statement */
+            statement();
+            token = checkGet(token, Until); /* next token must be "until" */
+            condition();
+            genCodeV(jpc, backP);           /* a jump to the statement */
+            return;
+        case For:                           /* for-do statement */
+            token = nextToken();
+            if(token.kind == Id) {
+                tIndex = searchT(token.u.id, varId); /* the index of the for variable */
+                setIdKind(k = kindT(tIndex));        /* sets the kind of the identifier for printing */
+                if(k != varId) {                     /* it must be a variable identifier */
+                    errorType("var");
+                }
+                token = checkGet(nextToken(), Assign); /* it must be a ":=" */
+                expression();                    /* initial value of the for variable */
+                genCodeT(sto, tIndex);           /* stores the initial value into the variable */
+                if(token.kind == To) {           /* incrementing for case */
+                    token = nextToken();
+                    backP = nextCode();          /* target address of the jump at the final */
+                    genCodeT(lod, tIndex);       /* loads the "for variable" value */
+                    expression();                /* final value of the "for variable" */
+                    genCodeO(lseq);              /* executes statement while var <= final value */
+                    backP2 = genCodeV(jpc, 0);   /* conditional jump to exit the loop */
+                    token = checkGet(token, Do); /* it must be a "Do" */
+                    statement();                 /* "real" job executed in the for-do loop */
+                    genCodeT(uad, tIndex);       /* increment the "for variable" by one */
+                }
+                else if(token.kind == Down) {          /* decrementing for case */
+                    token = checkGet(nextToken(), To); /* it must be a "To" */
+                    backP = nextCode();                /* target address of the jump at the final */
+                    genCodeT(lod, tIndex);             /* loads the "for variable" value */
+                    expression();                      /* final value of the "for variable" */
+                    genCodeO(greq);                    /* executes statement while var >= final value */
+                    backP2 = genCodeV(jpc, 0);         /* conditional jump to exit the loop */
+                    token = checkGet(token, Do);       /* it must be a "Do" */
+                    statement();                       /* "real" job executed in the for-do loop */
+                    genCodeT(usb, tIndex);             /* decrement the "for variable" by one */
+                }
+                else {
+                    errorMessage("Missing \"to\" or \"down to\" keywords");
+                }
+                genCodeV(jmp, backP); /* jump to the condition part */
+                backPatch(backP2);    /* adjusts conditional jump address */
+            }
+            else {
+                errorMissingId();
+            }
+            return;
+        case Call:                          /* procedure call statement */
+            token = nextToken();
+            if(token.kind == Id) {
+                tIndex = searchT(token.u.id, procId); /* searches the procedure index in name table */
+                setIdKind(k = kindT(tIndex)); /* sets the kind of the identifier for printing */
+                if(k != procId) { /* it must be a procedure identifier */
+                    errorType(token.u.id);
+                }
+                token = nextToken();
+                if(token.kind == Lparen) {
+                    i = 0; /* counts the number of arguments */
+                    token = nextToken();
+                    if(token.kind != Rparen) { /* it has arguments */
+                        while(1) {
+                            expression(); /* compiles an argument */
+                            i++;
+                            if(token.kind == Comma) { /* if the next token is a comma,
+                                                       * expect another argument */
+                                token = nextToken();
+                                continue;
+                            }
+                            token = checkGet(token, Rparen); /* it must be a ")" */
+                            break;
+                        }
+                    }
+                    else { /* no arguments */
+                        token = nextToken();
+                    }
+
+                    /* if the number of arguments is different from the
+                     * procedure's parameter number, shows an error */
+                    if(pars(tIndex) != i) {
+                        errorMessage("\\#par");
+                    }
+                }
+                else { /* assumes a no-argument procedure call */
+                    errorInsert(Lparen);
+                    errorInsert(Rparen);
+                }
+                genCodeT(cal, tIndex); /* code to call the procedure */
+            }
+            else { /* missing procedure ident */
+                errorMissingId();
+            }
+            return;
 		case End: case Semicolon:			/* An empty statement */
 			return;
 		default:			      /* It ignores tokens preceeding a starting token of statements */
@@ -239,6 +452,8 @@ int isStBeginKey(Token t)			/* Is a token t one of starting tokens of statements
 	switch (t.kind){
 	case Id:
 	case If: case Begin: case Ret:
+    case Unless: case Do:
+    case Repeat: case For:
 	case While: case Write: case WriteLn:
 		return 1;
 	default:
@@ -296,6 +511,12 @@ void factor()					/* It compiles a fcator of an expression. */
 		case varId: case parId:			/* The name of a variable or the name of a parameter */
 			genCodeT(lod, tIndex);
 			token = nextToken(); break;
+        case arrayId:                   /* the name of an array */
+            token = checkGet(nextToken(), Lbrack);
+            expression();
+            genCodeT(lot, tIndex); /* gets the value stored in array */
+            token = checkGet(token, Rbrack);
+            break;
 		case constId:					/* The name of a constant */
 			genCodeV(lit, val(tIndex));
 			token = nextToken(); break;
@@ -372,4 +593,3 @@ void condition()					/* It compiles a conditional expression. */
 		}
 	}
 }
-

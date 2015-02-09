@@ -1,0 +1,7 @@
+var x;
+begin
+    x := 0;
+    if x = 1 then write 1;
+    if x <> 1 then write 42;
+    writeln
+end.
